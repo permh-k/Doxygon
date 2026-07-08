@@ -36,7 +36,7 @@ Doxygon は **Doxygen スタイルのコメントから AsciiDoc ドキュメン
 
 VBA から生成されるドキュメントの一例です。
 
-<img src="docs/images/sample.png" width="90%">
+<img src="docs/images/sample.png" width="100%">
 
 ### VBA Source comments
 
