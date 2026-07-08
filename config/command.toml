@@ -1,0 +1,153 @@
+# ============================================================================
+# Doxygon command specification file - Doxygon コマンド定義ファイル
+# ============================================================================
+#
+# [commands.xxx] の xxx を command 名とする。
+#
+# 例:
+#   [commands.fn] -> @fn
+#
+# syntax:
+#   TAG        : 1 token 必須
+#   TAG?       : 1 token 任意
+#   SENTENCE?  : header 行の残りを任意
+#   DIRECTION  : [in] / [out] / [in,out] / [out,in]
+#   NAME, MAIL?: @author 専用
+#
+# handler:
+#   dispatcher の振り分け先。
+#
+# kind:
+#   handler 固有値。現状は AdmonitionHandler 用。
+# ============================================================================
+
+
+[commands.file]
+syntax = "TAG? SENTENCE?"
+handler = "FileHandler"
+
+
+[commands.fn]
+syntax = "TAG SENTENCE?"
+handler = "FnHandler"
+
+
+[commands.brief]
+syntax = "SENTENCE?"
+handler = "BriefHandler"
+
+
+[commands.details]
+syntax = "SENTENCE?"
+handler = "DetailsHandler"
+
+
+[commands.par]
+syntax = "TITLE"
+handler = "ParHandler"
+
+
+[commands.param]
+syntax = "DIRECTION? TAG SENTENCE?"
+handler = "ParamHandler"
+
+
+[commands.return]
+syntax = "TAG? SENTENCE?"
+handler = "ReturnHandler"
+
+
+[commands.var]
+syntax = "TAG SENTENCE?"
+handler = "VarHandler"
+
+
+[commands.define]
+syntax = "TAG SENTENCE?"
+handler = "DefineHandler"
+
+
+[commands.author]
+syntax = "NAME MAIL?"
+handler = "AuthorHandler"
+allow_continuation = true
+
+[commands.figure]
+syntax = "TAG SENTENCE?"
+handler = "FigureHandler"
+
+
+[commands.table]
+syntax = "TAG SENTENCE?"
+handler = "TableHandler"
+
+
+[commands.note]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "NOTE"
+
+
+[commands.warning]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "WARNING"
+
+
+[commands.attention]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "CAUTION"
+
+
+[commands.important]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "IMPORTANT"
+
+
+[commands.tip]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "TIP"
+
+
+[commands.todo]
+syntax = "SENTENCE?"
+handler = "AdmonitionHandler"
+kind = "TODO"
+
+
+[commands.deprecated]
+syntax = "SENTENCE?"
+handler = "DeprecatedHandler"
+
+
+[commands.struct]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"
+
+
+[commands.enum]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"
+
+
+[commands.class]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"
+
+
+[commands.interface]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"
+
+
+[commands.union]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"
+
+
+[commands.type]
+syntax = "TAG SENTENCE?"
+handler = "ContainerHandler"

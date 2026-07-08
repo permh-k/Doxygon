@@ -1,0 +1,49 @@
+
+=== SampleModule.bas ファイル
+
+<<src.SampleModule_bas.L1.global,サンプルモジュール>>
+
+処理概要::
+Excel VBA 用のサンプルです。
+
+
+**関数**::
+
+* Add : 加算処理
+
+==== 関数詳解
+
+===== Add
+加算処理
+
+コーリングシーケンス::
+[source,vb]
+----
+Public Function Add(ByVal a As Long, ByVal b As Long) As Long
+----
+<<src.SampleModule_bas.L4.Add,ソースコードを見る>> （4 行目）
+
+引数::
+[in] [.maroon]##a##::: 値A
+[in] [.maroon]##b##::: 値B
+
+戻り値::
+Add 加算結果
+
+==== ソースコード
+
+[[src.SampleModule_bas]]
+
+[[src.SampleModule_bas.L1.global]]
+===== SampleModule.bas
+[source,vb,linenums,start=1]
+----
+include::src/SampleModule.bas[lines=1..2]
+----
+
+[[src.SampleModule_bas.L4.Add]]
+===== Add
+[source,vb,linenums,start=4]
+----
+include::src/SampleModule.bas[lines=4..6]
+----

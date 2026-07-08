@@ -1,0 +1,191 @@
+[project]
+name = "Doxygon"
+version = "1.0.0"
+author = "permh_k"
+description = "Documentation generator for Doxygen-style comments."
+
+# Document generation date ("auto" or fixed string)
+date = "auto"
+
+[paths]
+input_dir = "./examples/input"
+output_dir = "./examples/output"
+
+# =========================================================
+# 共通コマンド定義
+# =========================================================
+
+[commands]
+
+# ---------- file ----------
+file = { role = "meta" }
+
+# ---------- container ----------
+struct = { role = "data", container = true }
+enum   = { role = "data", container = true }
+union  = { role = "data", container = true }
+
+type   = { role = "data", container = true }      # VBA
+class  = { role = "data", container = true }      # Python / Java / JS
+interface = { role = "data", container = true }
+
+fn = { role = "function", container = true }
+
+# ---------- detail ----------
+member = { role = "detail" }
+param  = { role = "detail" }
+return = { role = "detail" }
+var    = { role = "detail" }
+define = { role = "macro" }
+
+# ---------- section ----------
+brief   = { role = "section" }
+details = { role = "section" }
+par     = { role = "section" }
+
+# ---------- misc ----------
+author = { role = "meta" }
+todo   = { role = "meta" }
+
+# ---------- block ----------
+figure = { role = "block" }
+table  = { role = "block" }
+
+# ---------- admonition ----------
+note      = { role = "admonition" }
+warning   = { role = "admonition" }
+caution   = { role = "admonition" }
+important = { role = "admonition" }
+tip       = { role = "admonition" }
+
+
+# ==========================================================
+# デリミタ定義
+# ==========================================================
+[delim]
+separator = "........"
+
+# ==========================================================
+# 言語定義
+# ==========================================================
+
+[languages.c]
+extensions = ["c", "h"]
+rouge_ext  = "c"
+
+dox_block_start = ["/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["struct", "enum", "union"]
+
+
+[languages.cpp]
+extensions = ["cpp", "hpp", "cc", "hh"]
+rouge_ext  = "cpp"
+
+dox_block_start = ["/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["struct", "class", "enum"]
+
+
+[languages.python]
+extensions = ["py"]
+rouge_ext  = "python"
+
+dox_block_start = ['"""!', "'''!"]
+dox_block_end   = ['"""', "'''"]
+
+dox_inline_start = ['"""!<', "'''!<"]
+dox_inline_end   = ['"""', "'''"]
+
+container_commands = ["class"]
+
+
+[languages.vba]
+extensions = ["bas", "cls"]
+rouge_ext  = "vb"
+
+dox_block_start = ["'/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["'/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["type"]
+
+
+[languages.java]
+extensions = ["java"]
+rouge_ext  = "java"
+
+dox_block_start = ["/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["class", "interface", "enum"]
+
+
+[languages.javascript]
+extensions = ["js"]
+rouge_ext  = "javascript"
+
+dox_block_start = ["/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["class"]
+
+
+[languages.typescript]
+extensions = ["ts"]
+rouge_ext  = "typescript"
+
+dox_block_start = ["/**!"]
+dox_block_end   = ["*/"]
+
+dox_inline_start = ["/**!<"]
+dox_inline_end   = ["*/"]
+
+container_commands = ["class", "interface"]
+
+
+# ==========================================================
+# Clean source generation
+# ==========================================================
+# Doxygon normally removes comments based on every language's
+# dox_block_start/dox_block_end and dox_inline_start/dox_inline_end.
+#
+# The following entries are rescue rules: they are not necessarily parsed as
+# Doxygon comments for a specific language, but they should still be removed
+# from the clean source if they appear.
+
+[clean_source]
+extra_block_starts = [
+]
+
+extra_block_ends = [
+]
+
+extra_inline_starts = [
+    "//!<",
+]
+
+extra_inline_ends = [
+    "",
+]
+
+extra_line_starts = [
+    "//!",
+]
+

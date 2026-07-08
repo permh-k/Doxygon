@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doxygon"
+version = "1.0.0"
+description = "Documentation generator for Doxygen-style comments."
+authors = [{name = "permh_k"}]
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "lark",
+]
+
+keywords = [
+    "doxygen",
+    "asciidoc",
+    "documentation",
+    "vba",
+]
+license = { text = "BSD-2-Clause" }
+
+[project.scripts]
+doxygon = "doxygon.main:main"
+
+[tool.setuptools.packages.find]
+where = [""]
+include = ["doxygon*"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 128
+indent-width = 4
+
+[tool.ruff.lint]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = [
+    "E",   # pycodestyle error
+    "F",   # Pyflakes
+    "W",   # pycodestyle warning
+    "N",   # pep8 naming
+    "UP",  # pyupgrade
+#   "PD",  # pandas vet
+#   "NPY", # Numpy specific rules
+    "D"    # pydocstyle
+]
+
+ignore = [
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from err
+    "C901",  # too complex
+    "D202",  # No blank lines allowed after function docstring
+    "D205",  # blank line after summary
+    "D209",  # Multi-line docstring closing quotes should be on a separate line
+    "D400",  # missing trailing period
+    "D415",  # missing terminal punctuation
+    "D100",  # Missing docstring in public module
+    "E501",  # line too long, handled by black
+    "UP009", # UTF-8 encoding declaration is unnecessary
+]
+
+fixable = ["ALL"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [".venv", "venv"]
