@@ -101,8 +101,21 @@ End Function
 
 ## Quick Start
 
+
+### 1. ダウンロード
+
+"latest" から **Source code (zip)** をダウンロードし、適当なフォルダーに展開します。
+
+### 2. インストール
+
+``` bash
+pip install .
+```
+
+### 3. 実行
+
 ```bash
-python run_doxygon.py
+doxygon
 ```
 
 ---
