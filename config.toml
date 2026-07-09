@@ -102,8 +102,8 @@ rouge_ext  = "python"
 dox_block_start = ['"""!', "'''!"]
 dox_block_end   = ['"""', "'''"]
 
-dox_inline_start = ['"""!<', "'''!<"]
-dox_inline_end   = ['"""', "'''"]
+dox_inline_start = []
+dox_inline_end   = []
 
 container_commands = ["class"]
 
