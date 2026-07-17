@@ -353,10 +353,10 @@ def _emit_segments(lines: list[str], segments) -> None:
 
 
 def _emit_segments_raw(lines: list[str], segments) -> None:
-    """Emit segments without adding AsciiDoc listing delimiters.
+    """Emit command payload without adding AsciiDoc listing delimiters.
 
-    DELIM is only a Doxygon boundary marker. For @figure/@table, the
-    enclosed AsciiDoc payload must be emitted as-is.
+    Text segments and DELIM segments are both user-authored AsciiDoc.
+    DELIM is only a Doxygon boundary marker, so its payload is emitted as-is.
     """
     if not segments:
         return
@@ -938,25 +938,6 @@ def _render_todo(lines: list[str], n: Node) -> None:
         lines.append("{empty}")
 
 
-def _has_delim_segment(n: Node) -> bool:
-    return any(isinstance(seg, DelimSegment) for seg in (n.segments or []))
-
-
-def _present_missing_delim_warning(
-    lines: list[str],
-    n: Node,
-    *,
-    source_filename: str | None = None,
-) -> None:
-    location = _extract_location(n, source_filename=source_filename)
-    command = f"@{n.command}"
-
-    lines.append(
-        f"\n\n====\n[.maroon]##[WARNING]##{location} "
-        f"{command} コマンドに必要なブロックが存在しません。\n===="
-    )
-
-
 """!
 @fn _render_figure "@figure"コマンド描画処理
 @brief "@figure"に図キャプションを付加し、画像セクションとして出力する。
@@ -969,17 +950,16 @@ def _render_figure(
     *,
     source_filename: str | None = None,
 ) -> None:
-    if not _has_delim_segment(n):
-        _present_missing_delim_warning(lines, n, source_filename=source_filename)
-        return
-
     title = _escape_adoc_attr_value(n.argument or "")
 
     lines.append(
         f'\n[caption="{{fig_caption}}.{{counter:figure}}",title=" {title}"]'
     )
 
-    _emit_segments_raw(lines, n.segments)
+    if n.segments:
+        _emit_segments_raw(lines, n.segments)
+    else:
+        _emit_body(lines, n.body)
 
 """!
 @fn _render_table "@table"コマンド描画処理
@@ -993,17 +973,16 @@ def _render_table(
     *,
     source_filename: str | None = None,
 ) -> None:
-    if not _has_delim_segment(n):
-        _present_missing_delim_warning(lines, n, source_filename=source_filename)
-        return
-
     title = _escape_adoc_attr_value(n.argument or "")
 
     lines.append(
         f'\n[caption="{{tbl_caption}}.{{counter:table}}",title=" {title}"]'
     )
 
-    _emit_segments_raw(lines, n.segments)
+    if n.segments:
+        _emit_segments_raw(lines, n.segments)
+    else:
+        _emit_body(lines, n.body)
 
 """!
 @fn _render_authors "@author"コマンド描画処理

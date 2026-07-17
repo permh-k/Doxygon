@@ -4,10 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "doxygon"
-version = "1.0.2"
-description = "Documentation generator for Doxygen-style comments."
-authors = [{name = "permh_k"}]
-readme = "README.md"
+version = "1.0.3"
 requires-python = ">=3.13"
 
 dependencies = [

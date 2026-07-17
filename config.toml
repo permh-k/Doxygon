@@ -1,7 +1,5 @@
 [project]
 name = "Doxygon"
-version = "1.0.0"
-author = "permh_k"
 description = "Documentation generator for Doxygen-style comments."
 
 # Document generation date ("auto" or fixed string)

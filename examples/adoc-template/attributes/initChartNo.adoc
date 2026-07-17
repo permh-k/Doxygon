@@ -1,0 +1,7 @@
+:chapter: {counter:chapter}
+:fig_caption: 図 {chapter}
+:tbl_caption: 表 {chapter}
+:exp_caption: 例 {chapter}
+:!figure:
+:!table:
+:!example:

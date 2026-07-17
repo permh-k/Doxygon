@@ -1,10 +1,18 @@
 
-=== SampleModule.bas ファイル
+=== SampleModules.bas ファイル
 
 <<src.SampleModule_bas.L1.global,サンプルモジュール>>
 
 処理概要::
 Excel VBA 用のサンプルです。
+
+
+[caption="{fig_caption}.{counter:figure}",title=" PlantUML のサンプル"]
+[plantuml]
+----
+Bob -> Alice
+----
+
 
 
 **関数**::

@@ -1,0 +1,20 @@
+// AsciiDoc 用 Doxygon サンプルコンテンツ
+// このファイルは Doxygon が生成した .adoc を HTML/PDF に変換するためのサンプルです。
+// 使用する出力形式に応じて、Asciidoctor または Asciidoctor PDF の環境を用意してください。
+// 必要に応じて、文書属性、見出し、および include へのパスを編集してください。
+
+= Doxygon Sample
+
+:lang: ja
+:scripts: cjk
+:doctype: book
+:toc: left
+:toc-title: 目次
+:sectnums:
+
+
+== ファイル一覧
+
+include::./attributes/initChartNo.adoc[]
+include::../example/output/SampleModule.bas.adoc[]
+

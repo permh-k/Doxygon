@@ -12,11 +12,8 @@ Doxygon は **Doxygen スタイルのコメントから AsciiDoc ドキュメン
 
 これが Doxygon の基本思想です。
 
-> **We need no sources, only comments.**
-
-一般的なドキュメント生成ツールは、ソースコードを解析して関数やクラスを抽出し、その情報を元にドキュメントを構築します。
-
-一方 Doxygon では、**コメントがドキュメント構造を定義します。**
+<!-- > **We need no sources, only comments.** -->
+一般的なドキュメント生成ツールは、ソースコードを解析し、その情報を元にドキュメントを構築しますが、Doxygon は**コメントがドキュメント構造を定義します。**
 
 そのため、
 
@@ -30,13 +27,43 @@ Doxygon は **Doxygen スタイルのコメントから AsciiDoc ドキュメン
 
 ---
 
+## Why Doxygon?
+
+### One source file. One design document. Always synchronized.
+
+従来の開発では、
+
+- 設計書
+- ソースコード
+
+を別々のファイルとして管理する必要がありました。
+
+仕様変更やバグ修正のたびに、ソースコードだけでなく設計書も更新する必要があります。
+
+しかし、設計書の修正は後回しになりがちで、やがて実装と設計書の内容に乖離が生じ、陳腐化してしまうことが少なくありません。
+
+Doxygon では、設計情報をコメントとしてソースファイル内に記述し、そのコメントから AsciiDoc ドキュメントを生成します。
+
+つまり、
+
+- 設計書
+- ソースコード
+
+を一つのテキストファイルで管理できます。
+
+設計変更時はコメントを修正するだけでよく、そこから最新の設計書をいつでも生成できます。
+
+その結果、設計書と実装の乖離を最小限に抑え、常に同期した状態を維持できます。
+
+---
+
 ## Example
 
 ### Generated Design document
 
 VBA から生成されるドキュメントの一例です。
 
-<img src="docs/images/sample.png" width="100%">
+<img src="docs/images/sample.png" width="80%">
 
 ### VBA Source comments
 
@@ -48,6 +75,13 @@ Option Explicit
 '
 ' @brief
 ' Excel VBA 用のサンプルです。
+'
+' @figure PlantUML のサンプル
+' [plantuml]
+' ----
+' Bob -> Alice
+' ----
+'
 '*/
 
 '/**!
@@ -102,21 +136,28 @@ End Function
 ## Quick Start
 
 
-### 1. ダウンロード
+### ダウンロード
 
-"latest" から **Source code (zip)** をダウンロードし、適当なフォルダーに展開します。
+GitHub の Release ページの最新版から **Doxygon-windows-x64-vxxx.zip** をダウンロードし、適当なフォルダーに展開します。
 
-### 2. インストール
-
-``` bash
-pip install .
-```
-
-### 3. 実行
+### 実行
+コマンドプロンプトから、以下のコマンドを実行します。
 
 ```bash
-doxygon
+> doxygon
 ```
+
+---
+
+## adoc-template
+
+Doxygon は AsciiDoc を生成するところまでを責務としています。
+
+HTML や PDF のレイアウトは Asciidoctor 側の役割です。
+
+Doxygon が生成する .adoc ファイルは、このテンプレートと組み合わせることで、HTML や PDF として出力できます。
+
+必要に応じて自由にカスタマイズし、自分のプロジェクトに合わせた設計書を作成することができます。
 
 ---
 

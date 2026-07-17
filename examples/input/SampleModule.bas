@@ -1,10 +1,16 @@
 Attribute VB_Name = "SampleModule"
 Option Explicit
 '/**!
-' @file SampleModule.bas サンプルモジュール
-'
+' @file SampleModules.bas サンプルモジュール
 ' @brief
 ' Excel VBA 用のサンプルです。
+'
+' @figure PlantUML のサンプル
+' [plantuml]
+' ----
+' Bob -> Alice
+' ----
+'
 '*/
 
 '/**!

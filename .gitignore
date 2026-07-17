@@ -220,4 +220,4 @@ generated/
 *.spec
 *.exe
 tracked_files.txt
-build.ps1
+
