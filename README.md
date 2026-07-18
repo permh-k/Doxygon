@@ -63,7 +63,7 @@ Doxygon では、設計情報をコメントとしてソースファイル内に
 
 VBA から生成されるドキュメントの一例です。
 
-<img src="docs/images/sample.png" width="80%">
+<img src="docs/images/sample.png" width="100%">
 
 ### VBA Source comments
 
