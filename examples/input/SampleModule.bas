@@ -5,11 +5,8 @@ Option Explicit
 ' @brief
 ' Excel VBA 用のサンプルです。
 '
-' @figure PlantUML のサンプル
-' [plantuml]
-' ----
-' Bob -> Alice
-' ----
+' @warning 実行には管理者権限が必要です。
+'
 '
 '*/
 

@@ -62,3 +62,4 @@ fixable = ["ALL"]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [".venv", "venv"]
+

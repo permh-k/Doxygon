@@ -1,4 +1,4 @@
-<img src="docs/images/Goxydon.png" alt="Goxydon" align="right" width="25%" style="margin-right: 10%;">
+<img src="images/Goxydon_s.png" alt="Goxydon" align="right" width="30%" style="margin-right: 10%;">
 
 # Doxygon
 
@@ -63,7 +63,7 @@ Doxygon では、設計情報をコメントとしてソースファイル内に
 
 VBA から生成されるドキュメントの一例です。
 
-<img src="docs/images/sample.png" width="100%">
+<img src="images/sample.png" width="100%">
 
 ### VBA Source comments
 
