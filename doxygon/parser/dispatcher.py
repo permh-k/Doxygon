@@ -13,6 +13,7 @@ from doxygon.model.model import (
 )
 from doxygon.parser.command_registry import CommandRegistry
 from doxygon.parser.parsed_command import ParsedCommand
+from doxygon.parser.ut_parser import parse_ut_entries
 
 
 """!
@@ -30,7 +31,17 @@ def dispatch_command(
     registry: CommandRegistry,
 ) -> Node:
 
-    return Node(
+    ut_entries = []
+    ut_diagnostics = []
+
+    if parsed.command == "ut":
+        ut_entries, ut_diagnostics = parse_ut_entries(
+            argument=_build_argument(parsed),
+            body_lines=block.body_lines,
+            start_line=block.start_line,
+        )
+
+    node = Node(
         block_id=block.block_id,
         command=parsed.command,
         line_no=block.start_line,
@@ -39,7 +50,14 @@ def dispatch_command(
         children=_build_inline_children(block),
         is_error=block.is_error,
         segments=block.segments.copy(),
+        ut_entries=ut_entries,
     )
+
+    if ut_diagnostics:
+        node.is_error = True
+        node.diagnostics.extend(ut_diagnostics)
+
+    return node
 
 
 def _build_argument(parsed: ParsedCommand) -> str:

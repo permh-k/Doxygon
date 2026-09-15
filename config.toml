@@ -5,6 +5,11 @@ description = "Documentation generator for Doxygen-style comments."
 # Document generation date ("auto" or fixed string)
 date = "auto"
 
+[unit_test]
+adoc_output = false
+json_output = true
+csv_output = true
+
 [paths]
 input_dir = "./examples/input"
 output_dir = "./examples/output"
@@ -186,4 +191,3 @@ extra_inline_ends = [
 extra_line_starts = [
     "//!",
 ]
-

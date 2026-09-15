@@ -42,6 +42,11 @@ syntax = "SENTENCE?"
 handler = "DetailsHandler"
 
 
+[commands.ut]
+syntax = "SENTENCE?"
+handler = "UtHandler"
+
+
 [commands.par]
 syntax = "TITLE"
 handler = "ParHandler"

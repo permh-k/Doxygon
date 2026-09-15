@@ -1714,6 +1714,7 @@ def _render_nodes(
 @param [in] lang_cfg プログラミング言語情報
 @param [in] function_blocks 関数領域一覧
 @param [in] global_blocks グローバル領域一覧
+@param [in] unit_test_cfg 単体試験仕様出力設定
 @return adoc_text 生成されたAsciiDocドキュメント
 """
 def generate_adoc(
@@ -1725,7 +1726,19 @@ def generate_adoc(
     global_blocks: list[GlobalBlock],
     source_blocks: list[SourceBlock],
     clean_lines: list[str] | None = None,
+    unit_test_cfg: dict | None = None,
 ) -> str:
+    unit_test_cfg = unit_test_cfg or {}
+    adoc_output = unit_test_cfg.get("adoc_output", False)
+
+    if not isinstance(adoc_output, bool):
+        raise ValueError(
+            "[unit_test] adoc_output は true/false で指定してください。"
+        )
+
+    if not adoc_output:
+        nodes = [node for node in nodes if node.command != "ut"]
+
     lines: list[str] = []
     file_anchor = _make_file_anchor(source_filename)
     include_source_path = _make_source_include_path(source_filename)

@@ -89,6 +89,54 @@ class Diagnostic:
 
 
 """!
+@class UtEntry 単体試験仕様要素格納クラス
+"""
+@dataclass(slots=True, frozen=True)
+class UtEntry:
+    kind: str
+    text: str
+    level: int | None = None
+    test_type: str | None = None
+    line: int | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class UtHeading:
+    level: int
+    text: str
+    line: int | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class UtTestItem:
+    level: int
+    classification: str
+    text: str
+    line: int | None = None
+
+
+UtContent = UtHeading | UtTestItem
+
+
+@dataclass(slots=True)
+class UtFunctionSpec:
+    name: str
+    title: str = ""
+    contents: list[UtContent] = field(default_factory=list)
+
+
+UtFileContent = UtHeading | UtTestItem | UtFunctionSpec
+
+
+@dataclass(slots=True)
+class UtFileSpec:
+    name: str
+    source_filename: str
+    title: str = ""
+    contents: list[UtFileContent] = field(default_factory=list)
+
+
+"""!
 @class Node Doxygon文書構造ノード格納クラス
 """
 @dataclass(slots=True)
@@ -104,10 +152,10 @@ class Node:
 
     is_error: bool = False
     is_container: bool = False
-
     segments: list[Segment] | None = None
 
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    ut_entries: list[UtEntry] = field(default_factory=list)
 
     def __post_init__(self):
         if self.body is None:
