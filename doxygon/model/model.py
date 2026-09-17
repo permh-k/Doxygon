@@ -100,6 +100,32 @@ class UtEntry:
     line: int | None = None
 
 
+"""!
+@class ValueContent "@value"ブロック内容格納クラス
+"""
+@dataclass(slots=True, frozen=True)
+class ValueContent:
+    kind: str
+    text: str
+    classification: str | None = None
+    line: int | None = None
+
+
+"""!
+@class ValueEntry "@value"コマンド解析結果格納クラス
+"""
+@dataclass(slots=True, frozen=True)
+class ValueEntry:
+    kind: str = "exact"
+    operator: str = "="
+    value: str = ""
+    index: str = ""
+    description: str = ""
+    lower: str = ""
+    upper: str = ""
+    contents: tuple[ValueContent, ...] = ()
+
+
 @dataclass(slots=True, frozen=True)
 class UtHeading:
     level: int
@@ -115,7 +141,24 @@ class UtTestItem:
     line: int | None = None
 
 
-UtContent = UtHeading | UtTestItem
+@dataclass(slots=True, frozen=True)
+class UtAsciiDoc:
+    level: int
+    text: str
+    line: int | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class UtValueBlock:
+    owner_command: str
+    owner_name: str
+    condition: ValueEntry
+    owner_title: str = ""
+    direction: str = ""
+    line: int | None = None
+
+
+UtContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock
 
 
 @dataclass(slots=True)
@@ -125,7 +168,7 @@ class UtFunctionSpec:
     contents: list[UtContent] = field(default_factory=list)
 
 
-UtFileContent = UtHeading | UtTestItem | UtFunctionSpec
+UtFileContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock | UtFunctionSpec
 
 
 @dataclass(slots=True)
@@ -156,6 +199,7 @@ class Node:
 
     diagnostics: list[Diagnostic] = field(default_factory=list)
     ut_entries: list[UtEntry] = field(default_factory=list)
+    value_entry: ValueEntry | None = None
 
     def __post_init__(self):
         if self.body is None:

@@ -9,7 +9,14 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-from doxygon.model import TextSegment, DelimSegment, Node, FunctionBlock, GlobalBlock
+from doxygon.model import (
+    DelimSegment,
+    Diagnostic,
+    FunctionBlock,
+    GlobalBlock,
+    Node,
+    TextSegment,
+)
 from doxygon.scanner.source_scanner import SourceBlock
 
 _NUM_LIST_RE = re.compile(r"^\s*\.+\s+")
@@ -1033,13 +1040,18 @@ def _render_authors(lines: list[str], authors: list[Node]) -> None:
 @param [in,out] lines AsciiDocドキュメント出力行リスト
 @param [in] params 引数ノード
 """
-def _render_params(lines: list[str], params: list[Node]) -> None:
+def _render_params(
+    lines: list[str],
+    params: list[Node],
+    *,
+    source_filename: str | None = None,
+) -> None:
     if not params:
         return
 
     lines.append("\n引数::")
 
-    for p in params:
+    for p, values in _group_values(params, parent_command="param"):
         arg = (p.argument or "").strip()
         body = list(p.body or [])
 
@@ -1073,10 +1085,20 @@ def _render_params(lines: list[str], params: list[Node]) -> None:
             else:
                 lines.append(f"[.maroon]##{name}##::: {{empty}}")
 
-        _emit_body(lines, body)
+        _render_grouped_values(
+            lines,
+            parent_body=body,
+            values=values,
+            source_filename=source_filename,
+        )
 
 
-def _render_returns(lines: list[str], nodes: list[Node]) -> None:
+def _render_returns(
+    lines: list[str],
+    nodes: list[Node],
+    *,
+    source_filename: str | None = None,
+) -> None:
     """Render @return nodes without TAG/SENTENCE splitting.
 
     @return is not a key-value command in the display sense.  Its argument is
@@ -1088,7 +1110,7 @@ def _render_returns(lines: list[str], nodes: list[Node]) -> None:
 
     lines.append("\n戻り値::")
 
-    for n in nodes:
+    for n, values in _group_values(nodes, parent_command="return"):
         text = (n.argument or "").strip(" \t")
         body = list(n.body or [])
 
@@ -1099,11 +1121,100 @@ def _render_returns(lines: list[str], nodes: list[Node]) -> None:
             lines.append(text)
         elif body and _is_promotable_one_liner(body[0]):
             lines.append(body.pop(0).strip())
-        elif not any((line or "").strip() for line in body):
+        elif not any((line or "").strip() for line in body) and not values:
             lines.append("{empty}")
             body = []
 
-        _emit_body(lines, body)
+        _render_grouped_values(
+            lines,
+            parent_body=body,
+            values=values,
+            source_filename=source_filename,
+        )
+
+
+def _group_values(
+    nodes: list[Node],
+    *,
+    parent_command: str,
+) -> list[tuple[Node, list[Node]]]:
+    """Group each parent command with its following @value nodes."""
+
+    groups: list[tuple[Node, list[Node]]] = []
+
+    for node in nodes:
+        if node.command == parent_command:
+            groups.append((node, []))
+            continue
+
+        if node.command == "value" and groups:
+            groups[-1][1].append(node)
+
+    return groups
+
+
+def _render_value_bullet(lines: list[str], node: Node) -> None:
+    """Render one valid @value node as an AsciiDoc bullet."""
+
+    entry = node.value_entry
+
+    if entry is None:
+        return
+
+    index = f"[{entry.index}] " if entry.index else ""
+    description = f" : {entry.description}" if entry.description else ""
+
+    if entry.kind == "range":
+        condition = f"= {entry.lower} - {entry.upper}"
+    else:
+        condition = f"{entry.operator} {entry.value}"
+
+    lines.append(f"* {index}{condition}{description}")
+
+
+def _render_grouped_values(
+    lines: list[str],
+    *,
+    parent_body: list[str],
+    values: list[Node],
+    source_filename: str | None = None,
+) -> None:
+    """Render value definitions and parent text for the normal document.
+
+    The body belonging to an @value block is unit-test-specification content,
+    so it is intentionally omitted from the normal AsciiDoc output.
+    """
+
+    valid_values = [
+        node
+        for node in values
+        if not node.is_error and node.value_entry is not None
+    ]
+    invalid_values = [
+        node
+        for node in values
+        if node.is_error or node.value_entry is None
+    ]
+
+    has_body = any((line or "").strip() for line in parent_body)
+
+    if valid_values and lines and lines[-1] != "":
+        lines.append("")
+
+    for node in valid_values:
+        _render_value_bullet(lines, node)
+
+    if valid_values:
+        lines.append("")
+
+    _emit_body_keep_breaks(lines, parent_body)
+
+    for node in invalid_values:
+        _present_syntax_error(
+            lines,
+            node,
+            source_filename=source_filename,
+        )
 
 
 """!
@@ -1538,9 +1649,17 @@ def _present_syntax_error(
         if "invalid tag for @var" in d.message:
             message = "@var コマンドの構文に誤りがあります。"
             break
+        if "orphan @value" in d.message:
+            message = (
+                "@value コマンドに対応する @param または "
+                "@return コマンドが存在しません。"
+            )
+            break
     else:
         if getattr(n, "command", None) == "param" or command_text.startswith("@param"):
             message = "@param コマンドの [in/out] の指定に誤りがあります。"
+        elif getattr(n, "command", None) == "value" or command_text.startswith("@value"):
+            message = "@value コマンドの構文に誤りがあります。"
         else:
             for command_name in sorted(tag_required_commands, key=len, reverse=True):
                 if command_text.startswith(f"@{command_name}"):
@@ -1552,9 +1671,16 @@ def _present_syntax_error(
             message = "除外ブロックの終端デリミタが存在しません。"
             break
 
-    lines.append(
-        f"\n\n====\n[.red]##[SYNTAX_ERROR]##{location} "
-        f"{message}\n===="
+    if lines and lines[-1] != "":
+        lines.append("")
+
+    lines.extend(
+        [
+            "====",
+            f"[.red]##[SYNTAX_ERROR]##{location} {message}",
+            "====",
+            "",
+        ]
     )
 
     _emit_body(lines, body=None)
@@ -1584,9 +1710,17 @@ def _render_grouped(
 
         match current_type:
             case "param":
-                _render_params(lines, buffer)
+                _render_params(
+                    lines,
+                    buffer,
+                    source_filename=source_filename,
+                )
             case "return":
-                _render_returns(lines, buffer)
+                _render_returns(
+                    lines,
+                    buffer,
+                    source_filename=source_filename,
+                )
             case "author":
                 _render_authors(lines, buffer)
             case "var":
@@ -1621,6 +1755,28 @@ def _render_grouped(
         if n.command in {"param", "return", "author", "var", "define"} and getattr(n, "is_error", False):
             flush()
             _present_syntax_error(lines, n, source_filename=source_filename)
+            continue
+
+        if n.command == "value":
+            if current_type in {"param", "return"}:
+                buffer.append(n)
+                continue
+
+            flush()
+            n.is_error = True
+            n.diagnostics.append(
+                Diagnostic(
+                    level="error",
+                    message="orphan @value",
+                    line=n.line_no,
+                )
+            )
+            _present_syntax_error(
+                lines,
+                n,
+                source_filename=source_filename,
+            )
+            _emit_body(lines, n.body)
             continue
 
         if n.command in {"param", "return", "author", "var", "define", "inline"}:
@@ -1714,7 +1870,6 @@ def _render_nodes(
 @param [in] lang_cfg プログラミング言語情報
 @param [in] function_blocks 関数領域一覧
 @param [in] global_blocks グローバル領域一覧
-@param [in] unit_test_cfg 単体試験仕様出力設定
 @return adoc_text 生成されたAsciiDocドキュメント
 """
 def generate_adoc(
@@ -1726,18 +1881,12 @@ def generate_adoc(
     global_blocks: list[GlobalBlock],
     source_blocks: list[SourceBlock],
     clean_lines: list[str] | None = None,
-    unit_test_cfg: dict | None = None,
 ) -> str:
-    unit_test_cfg = unit_test_cfg or {}
-    adoc_output = unit_test_cfg.get("adoc_output", False)
-
-    if not isinstance(adoc_output, bool):
-        raise ValueError(
-            "[unit_test] adoc_output は true/false で指定してください。"
-        )
-
-    if not adoc_output:
-        nodes = [node for node in nodes if node.command != "ut"]
+    nodes = [
+        node
+        for node in nodes
+        if node.command != "ut"
+    ]
 
     lines: list[str] = []
     file_anchor = _make_file_anchor(source_filename)

@@ -5,19 +5,17 @@
 @file main.py Doxygon メイン処理
 """
 
-import sys
 from pathlib import Path
 import tomllib
 from typing import Any
 
 from doxygon.builder.generated_files import prepare_generated_files
-from doxygon.builder.unit_test_builder import build_unit_test_file_spec
-from doxygon.generator import generate_adoc
-from doxygon.generator.unit_test_csv import write_unit_test_csv
-from doxygon.generator.unit_test_json import (
-    write_unit_test_json,
+from doxygon.generator import (
+    generate_adoc,
+    generate_unit_test_outputs,
+    load_unit_test_config,
 )
-from doxygon.model import Node, SourceUnit, UtFileSpec
+from doxygon.model import SourceUnit
 from doxygon.parser import parse_command_blocks
 from doxygon.preproc import preprocess
 from doxygon.scanner import scan_source_structure, scan_sources
@@ -216,28 +214,6 @@ def _load_command_names(command_toml_path: Path) -> set[str]:
     return {str(name).lower() for name in commands.keys()}
 
 
-def _print_unit_test_diagnostics(
-    *,
-    nodes: list[Node],
-    source_filename: str,
-) -> None:
-    for node in nodes:
-        if node.command != "ut":
-            continue
-
-        for diagnostic in node.diagnostics:
-            if "invalid abnormal marker in @ut heading" not in diagnostic.message:
-                continue
-
-            location = f" {source_filename}"
-            if diagnostic.line is not None:
-                location += f": {diagnostic.line}"
-
-            print(
-                f"[SYNTAX_ERROR]{location} "
-                "@ut コマンドの見出しに ! を指定することはできません。"
-            )
-
 def main() -> None:
 
     config_path: Path = Path("config.toml")
@@ -265,23 +241,7 @@ def main() -> None:
 
     sources: list[SourceUnit] = scan_sources(input_path, languages_conf)
     delim_conf = config["delim"]
-    unit_test_cfg = config.get("unit_test", {})
-    json_output = unit_test_cfg.get("json_output", False)
-    csv_output = unit_test_cfg.get("csv_output", False)
-
-    if not isinstance(json_output, bool):
-        raise ValueError(
-            "[unit_test] json_output は true/false で指定してください。"
-        )
-
-    if not isinstance(csv_output, bool):
-        raise ValueError(
-            "[unit_test] csv_output は true/false で指定してください。"
-        )
-
-    unit_test_output = json_output or csv_output
-
-    unit_test_file_specs: list[UtFileSpec] = []
+    unit_test_config = load_unit_test_config(config.get("unit_test"))
 
     for src in sources:
 
@@ -355,18 +315,12 @@ def main() -> None:
             container_commands=lang_conf.get("container_commands", []),
         )
 
-        _print_unit_test_diagnostics(
-            nodes=nodes,
+        generate_unit_test_outputs(
             source_filename=source_filename,
+            nodes=nodes,
+            output_path=output_path,
+            config=unit_test_config,
         )
-
-        if unit_test_output:
-            unit_test_file_specs.append(
-                build_unit_test_file_spec(
-                    source_filename=source_filename,
-                    nodes=nodes,
-                )
-            )
 
         # --------------------------------------------------
         # adoc generation
@@ -381,7 +335,6 @@ def main() -> None:
             global_blocks=global_blocks,
             source_blocks=source_blocks,
             clean_lines=clean_lines,
-            unit_test_cfg=unit_test_cfg,
         )
 
         _write_output_file(
@@ -389,24 +342,6 @@ def main() -> None:
             adoc_text,
             output_path,
         )
-
-    for file_spec in unit_test_file_specs:
-        if json_output:
-            write_unit_test_json(
-                output_path=(
-                    output_path / f"{file_spec.source_filename}.json"
-                ),
-                file_specs=[file_spec],
-            )
-
-        if csv_output:
-            write_unit_test_csv(
-                output_path=(
-                    output_path / f"{file_spec.source_filename}.csv"
-                ),
-                file_specs=[file_spec],
-            )
-
 
 if __name__ == "__main__":
     main()

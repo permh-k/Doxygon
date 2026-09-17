@@ -6,9 +6,10 @@ description = "Documentation generator for Doxygen-style comments."
 date = "auto"
 
 [unit_test]
-adoc_output = false
 json_output = true
 csv_output = true
+auto_generate = true
+csv_encoding_utf8 = false
 
 [paths]
 input_dir = "./examples/input"

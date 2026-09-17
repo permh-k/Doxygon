@@ -7,14 +7,7 @@
 
 from __future__ import annotations
 
-import re
-
 from doxygon.model.model import Diagnostic, UtEntry
-
-
-_HEADING_RE = re.compile(r"^(\.+)[ \t]+(.+?)\s*$")
-_INVALID_HEADING_TYPE_RE = re.compile(r"^(\.+)[ \t]+![ \t]*(.*?)\s*$")
-_ABNORMAL_RE = re.compile(r"^![ \t]+(.+?)\s*$")
 
 
 """!
@@ -42,69 +35,87 @@ def parse_ut_entries(
         line_no = start_line + offset if start_line is not None else None
         source_lines.append((body_line, line_no))
 
-    for raw_line, line_no in source_lines:
-        line = (raw_line or "").strip()
+    while source_lines and not (source_lines[0][0] or "").strip():
+        source_lines.pop(0)
 
-        if not line:
-            continue
+    while source_lines and not (source_lines[-1][0] or "").strip():
+        source_lines.pop()
 
-        invalid_heading_type = _INVALID_HEADING_TYPE_RE.fullmatch(line)
+    asciidoc_lines: list[str] = []
+    asciidoc_start_line: int | None = None
 
-        if invalid_heading_type:
-            diagnostics.append(
-                Diagnostic(
-                    level="error",
-                    message="invalid abnormal marker in @ut heading",
-                    line=line_no,
-                )
-            )
+    def flush_asciidoc() -> None:
+        nonlocal asciidoc_lines, asciidoc_start_line
 
-            heading_text = invalid_heading_type.group(2).strip()
-
-            if heading_text:
-                entries.append(
-                    UtEntry(
-                        kind="heading",
-                        level=len(invalid_heading_type.group(1)),
-                        text=heading_text,
-                        line=line_no,
-                    )
-                )
-            continue
-
-        heading = _HEADING_RE.fullmatch(line)
-
-        if heading:
-            entries.append(
-                UtEntry(
-                    kind="heading",
-                    level=len(heading.group(1)),
-                    text=heading.group(2),
-                    line=line_no,
-                )
-            )
-            continue
-
-        abnormal = _ABNORMAL_RE.fullmatch(line)
-
-        if abnormal:
-            entries.append(
-                UtEntry(
-                    kind="test",
-                    test_type="abnormal",
-                    text=abnormal.group(1),
-                    line=line_no,
-                )
-            )
-            continue
+        if not asciidoc_lines:
+            return
 
         entries.append(
             UtEntry(
-                kind="test",
-                test_type="normal",
-                text=line,
-                line=line_no,
+                kind="asciidoc",
+                text="\n".join(asciidoc_lines),
+                line=asciidoc_start_line,
             )
         )
+        asciidoc_lines = []
+        asciidoc_start_line = None
 
+    for raw_line, line_no in source_lines:
+        preserved_line = raw_line or ""
+        line = preserved_line.lstrip(" \t")
+
+        if line.startswith("."):
+            flush_asciidoc()
+            level = len(line) - len(line.lstrip("."))
+            heading_text = line[level:].strip(" \t")
+
+            if not heading_text:
+                diagnostics.append(
+                    Diagnostic(
+                        level="error",
+                        message="empty @ut heading",
+                        line=line_no,
+                    )
+                )
+                continue
+
+            entries.append(
+                UtEntry(
+                    kind="heading",
+                    level=level,
+                    text=heading_text,
+                    line=line_no,
+                )
+            )
+            continue
+
+        if line.startswith(("+", "-")):
+            flush_asciidoc()
+            test_text = line[1:].strip(" \t")
+
+            if not test_text:
+                diagnostics.append(
+                    Diagnostic(
+                        level="error",
+                        message="empty @ut test item",
+                        line=line_no,
+                    )
+                )
+                continue
+
+            entries.append(
+                UtEntry(
+                    kind="test",
+                    test_type="normal" if line[0] == "+" else "abnormal",
+                    text=test_text,
+                    line=line_no,
+                )
+            )
+            continue
+
+        if not asciidoc_lines:
+            asciidoc_start_line = line_no
+        asciidoc_lines.append(preserved_line)
+
+    flush_asciidoc()
     return entries, diagnostics
