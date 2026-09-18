@@ -17,6 +17,10 @@ from doxygon.generator.unit_test_json import write_unit_test_json
 from doxygon.model import Node, UtFileSpec
 
 
+"""!
+@class UnitTestConfig 単体試験仕様書出力設定格納クラス
+@brief 単体試験仕様書の出力形式、自動生成およびCSV文字コード設定を保持する。
+"""
 @dataclass(slots=True, frozen=True)
 class UnitTestConfig:
     json_output: bool = False
@@ -80,6 +84,12 @@ def _diagnostic_message(node: Node, diagnostic_message: str) -> str | None:
     return None
 
 
+"""!
+@fn print_unit_test_diagnostics 単体試験仕様構文診断出力処理
+@brief "@ut"および"@value"の構文診断結果をコンソールへ出力する。
+@param [in] nodes Doxygonノード列
+@param [in] source_filename 対象ソースファイル名
+"""
 def print_unit_test_diagnostics(
     *,
     nodes: list[Node],
@@ -149,6 +159,11 @@ def generate_unit_test_outputs(
         nodes=nodes,
         auto_generate=config.auto_generate,
     )
+
+    if not file_spec.contents:
+        return
+
+    print("Generating unit test specification files ...")
 
     if config.json_output:
         write_unit_test_json(

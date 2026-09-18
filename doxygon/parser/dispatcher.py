@@ -62,6 +62,7 @@ def dispatch_command(
         segments=block.segments.copy(),
         ut_entries=ut_entries,
         value_entry=value_entry,
+        source_block_id=block.source_block_id,
     )
 
     if ut_diagnostics:

@@ -224,23 +224,74 @@ def _split_global_and_sections(
 
     current_parent: Node | None = None
 
-    for n in nodes:
-        if n.command == "fn":
-            n.children = []
-            fn_nodes.append(n)
-            current_parent = n
-            continue
+    # A physical Doxygon comment may contain several @commands.  Decide the
+    # owner from the whole comment instead of changing it as soon as @fn or a
+    # container command is encountered.  Otherwise commands written before
+    # and after @class acquire different owners merely because of their order.
+    groups: list[list[Node]] = []
 
-        if n.is_container or n.command in CONTAINER_COMMANDS:
+    for n in nodes:
+        source_block_id = n.source_block_id
+
+        if (
+            source_block_id is not None
+            and groups
+            and groups[-1][0].source_block_id == source_block_id
+        ):
+            groups[-1].append(n)
+        else:
+            groups.append([n])
+
+    for group in groups:
+        file_nodes = [n for n in group if n.command == "file"]
+        group_fn_nodes = [n for n in group if n.command == "fn"]
+        group_container_nodes = [
+            n for n in group
+            if n.is_container or n.command in CONTAINER_COMMANDS
+        ]
+        structural_ids = {
+            id(n)
+            for n in file_nodes + group_fn_nodes + group_container_nodes
+        }
+        content_nodes = [n for n in group if id(n) not in structural_ids]
+
+        for n in group_fn_nodes:
+            n.children = list(n.children or [])
+            fn_nodes.append(n)
+
+        for n in group_container_nodes:
             n.children = list(n.children or [])
             container_nodes.append(n)
-            current_parent = n
+
+        # @file defines a file-level comment block.  Other commands in that
+        # same comment remain file-level even when @class/@fn is also listed.
+        # Structural commands are still collected for their own summaries.
+        if file_nodes:
+            global_nodes.extend(file_nodes)
+            global_nodes.extend(content_nodes)
+            current_parent = None
             continue
 
-        if current_parent is None:
-            global_nodes.append(n)
+        owners = group_fn_nodes + group_container_nodes
+
+        if len(owners) == 1:
+            owner = owners[0]
+            owner.children.extend(content_nodes)
+            current_parent = owner
+            continue
+
+        # With no new structural command, keep the established source
+        # context so inline/continuation comments still belong to the current
+        # function or container.  An ambiguous block containing multiple
+        # owners keeps its content visible at file level instead of silently
+        # assigning it according to command order.
+        if not owners and current_parent is not None:
+            current_parent.children.extend(content_nodes)
         else:
-            current_parent.children.append(n)
+            global_nodes.extend(content_nodes)
+
+        if owners:
+            current_parent = None
 
     return global_nodes, fn_nodes, container_nodes
 

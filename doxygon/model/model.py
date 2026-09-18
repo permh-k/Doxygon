@@ -47,6 +47,10 @@ class CommandBlock:
     is_error: bool = False
 
     inline_children: list[list[str]] = field(default_factory=list)
+    # Commands split from the same physical Doxygon comment share this ID.
+    # ``block_id`` identifies an individual @command; this value identifies
+    # the source comment that contained it.
+    source_block_id: int | None = None
 
 
 """!
@@ -126,6 +130,10 @@ class ValueEntry:
     contents: tuple[ValueContent, ...] = ()
 
 
+"""!
+@class UtHeading 単体試験仕様見出し格納クラス
+@brief 見出しレベル、見出し文字列およびソース行番号を保持する。
+"""
 @dataclass(slots=True, frozen=True)
 class UtHeading:
     level: int
@@ -133,6 +141,10 @@ class UtHeading:
     line: int | None = None
 
 
+"""!
+@class UtTestItem 単体試験項目格納クラス
+@brief 試験項目の見出しレベル、正常系または異常系の分類および内容を保持する。
+"""
 @dataclass(slots=True, frozen=True)
 class UtTestItem:
     level: int
@@ -141,6 +153,10 @@ class UtTestItem:
     line: int | None = None
 
 
+"""!
+@class UtAsciiDoc 単体試験仕様AsciiDoc要素格納クラス
+@brief 試験項目に付随するAsciiDoc記述と見出しレベルを保持する。
+"""
 @dataclass(slots=True, frozen=True)
 class UtAsciiDoc:
     level: int
@@ -148,6 +164,10 @@ class UtAsciiDoc:
     line: int | None = None
 
 
+"""!
+@class UtValueBlock 値条件試験ブロック格納クラス
+@brief "@param"または"@return"に属する"@value"の条件と所有情報を保持する。
+"""
 @dataclass(slots=True, frozen=True)
 class UtValueBlock:
     owner_command: str
@@ -161,6 +181,10 @@ class UtValueBlock:
 UtContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock
 
 
+"""!
+@class UtFunctionSpec 関数単位試験仕様格納クラス
+@brief 関数名、関数和名および関数に属する単体試験仕様要素を保持する。
+"""
 @dataclass(slots=True)
 class UtFunctionSpec:
     name: str
@@ -171,6 +195,10 @@ class UtFunctionSpec:
 UtFileContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock | UtFunctionSpec
 
 
+"""!
+@class UtFileSpec ファイル単位試験仕様格納クラス
+@brief ファイル名、ファイル和名およびファイルに属する単体試験仕様要素を保持する。
+"""
 @dataclass(slots=True)
 class UtFileSpec:
     name: str
@@ -200,6 +228,7 @@ class Node:
     diagnostics: list[Diagnostic] = field(default_factory=list)
     ut_entries: list[UtEntry] = field(default_factory=list)
     value_entry: ValueEntry | None = None
+    source_block_id: int | None = None
 
     def __post_init__(self):
         if self.body is None:

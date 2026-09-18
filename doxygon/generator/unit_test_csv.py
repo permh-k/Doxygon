@@ -109,6 +109,12 @@ def _value_section_heading(content: UtValueBlock) -> str:
     return "入力値の確認"
 
 
+"""!
+@fn _generated_test_text 値条件試験内容生成処理
+@brief "@value"の所有元、方向および条件から試験内容を生成する。
+@param [in] content 値条件試験ブロック
+@return test_text 生成された試験内容
+"""
 def _generated_test_text(content: UtValueBlock) -> str:
     condition = content.condition
     condition_text = _condition_text(content)
@@ -174,6 +180,17 @@ def _max_level(file_specs: list[UtFileSpec]) -> int:
     return max_level
 
 
+"""!
+@fn _make_rows 単体試験仕様CSV行生成処理
+@brief 単体試験仕様要素を見出し階層が展開されたCSV行へ変換する。
+@param [in] file_name ファイル名
+@param [in] file_title ファイル和名
+@param [in] function_name 関数名
+@param [in] function_title 関数和名
+@param [in] contents 単体試験仕様要素列
+@param [in] max_level 最大見出しレベル
+@return rows CSV出力行列
+"""
 def _make_rows(
     *,
     file_name: str,

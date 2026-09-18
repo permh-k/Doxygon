@@ -104,6 +104,13 @@ def _split_description(payload: str) -> tuple[str, str, bool]:
     return payload.strip(" \t"), "", False
 
 
+"""!
+@fn _parse_value_contents "@value"ブロック本文解析処理
+@brief "@value"ブロック本文を試験項目とAsciiDoc記述へ分類する。
+@param [in] body_lines "@value"ブロック本文
+@param [in] start_line "@value"コマンドのソース行番号
+@return result "@value"ブロック内容と診断情報
+"""
 def _parse_value_contents(
     *,
     body_lines: list[str],

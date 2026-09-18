@@ -198,10 +198,11 @@ def _make_source_clean_source_rules(
     return global_clean_source_rules
 
 """!
-@fn main メイン処理
-@brief 指定されたソースファイルのDoxygonコメントを解析し、AsciiDocドキュメントを生成する。
+@fn _load_command_names Doxygonコマンド名読込み処理
+@brief Doxygonコマンド定義ファイルからコマンド名を読み込む。
+@param [in] command_toml_path Doxygonコマンド定義ファイルのパス
+@return command_names 小文字へ正規化したDoxygonコマンド名の集合
 """
-
 def _load_command_names(command_toml_path: Path) -> set[str]:
     with command_toml_path.open("rb") as f:
         data = tomllib.load(f)
@@ -214,6 +215,10 @@ def _load_command_names(command_toml_path: Path) -> set[str]:
     return {str(name).lower() for name in commands.keys()}
 
 
+"""!
+@fn main メイン処理
+@brief 指定されたソースファイルのDoxygonコメントを解析し、AsciiDocドキュメントを生成する。
+"""
 def main() -> None:
 
     config_path: Path = Path("config.toml")

@@ -85,6 +85,7 @@ def parse_command_blocks(
                         children=_build_inline_children_fallback(block),
                         is_error=True,
                         segments=block.segments.copy(),
+                        source_block_id=block.source_block_id,
                     )
                     node.diagnostics.append(
                         Diagnostic(
@@ -177,6 +178,7 @@ def _make_unknown_command_node(
         children=_build_inline_children_fallback(block),
         is_error=block.is_error,
         segments=block.segments.copy(),
+        source_block_id=block.source_block_id,
     )
 _BODY_STYLE_FALLBACK_COMMANDS = {
     "brief",
@@ -230,6 +232,7 @@ def _make_known_command_fallback_node(
         children=_build_inline_children_fallback(block),
         is_error=block.is_error,
         segments=block.segments.copy(),
+        source_block_id=block.source_block_id,
     )
 
 

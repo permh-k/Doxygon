@@ -291,6 +291,7 @@ def _make_command_block(
     block_id: int,
     command_line: str,
     start_line: int,
+    source_block_id: int | None = None,
 ) -> CommandBlock:
     return CommandBlock(
         block_id=block_id,
@@ -300,6 +301,7 @@ def _make_command_block(
         start_line=start_line,
         is_error=False,
         inline_children=[],
+        source_block_id=source_block_id,
     )
 
 
@@ -345,6 +347,7 @@ def _split_block_lines_to_command_blocks(
     separator: str,
     block_id_start: int,
     known_commands: set[str] | None = None,
+    source_block_id: int | None = None,
 ) -> tuple[list[CommandBlock], int]:
 
     blocks: list[CommandBlock] = []
@@ -391,6 +394,7 @@ def _split_block_lines_to_command_blocks(
                 start_line=command_start_line,
                 is_error=current_is_error,
                 inline_children=[],
+                source_block_id=source_block_id,
             )
         )
 
@@ -599,6 +603,7 @@ def preprocess(
                         block_id=block_id,
                         command_line=command_line,
                         start_line=i + 1,
+                        source_block_id=i + 1,
                     )
                 )
                 block_id += 1
@@ -680,6 +685,7 @@ def preprocess(
                 separator=delim_separator,
                 block_id_start=block_id,
                 known_commands=known_command_set,
+                source_block_id=i + 1,
             )
 
             result.extend(command_blocks)
@@ -703,5 +709,4 @@ def preprocess(
         i += 1
 
     return result
-
 

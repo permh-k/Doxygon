@@ -12,8 +12,11 @@ auto_generate = true
 csv_encoding_utf8 = false
 
 [paths]
-input_dir = "./examples/input"
-output_dir = "./examples/output"
+# input_dir = "./examples/input"
+# output_dir = "./examples/output"
+
+input_dir = "D:\\workspace\\doxygon_v5\\examples\\input"
+output_dir = "Z:\\adocs\\text\\15-Doxygone_Function_Design_Document\\adocs"
 
 # =========================================================
 # 共通コマンド定義
