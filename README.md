@@ -4,7 +4,7 @@
 
 ## Design documents start with comments, not source code.
 
-Doxygon は **Doxygen スタイルのコメントから AsciiDoc ドキュメントを生成するツール**です。
+Doxygon は **Doxygen スタイルのコメントからプログラム設計書と単体試験仕様書を生成するツール**です。
 
 しかし、Doxygon が目指しているのは、単なる「Doxygen の代替ツール」ではありません。
 
@@ -106,6 +106,9 @@ End Function
 - コメント主体でドキュメント構造を構築
 - AsciiDoc の機能（PlantUML・Graphviz・数式・表など）をそのまま利用
 - HTML / PDF 生成に適した AsciiDoc を出力
+- `@ut` コマンドから単体試験仕様書を生成
+- `@param`／`@return` と `@value` の組み合わせからテストケースを自動生成
+- 単体試験仕様書を JSON／CSV 形式で出力
 - **VBA を正式サポート**
 
 ---
@@ -138,7 +141,7 @@ End Function
 
 ### ダウンロード
 
-GitHub の Release ページの最新版から **Doxygon-windows-x64-vxxx.zip** をダウンロードし、適当なフォルダーに展開します。
+GitHub の Release ページの最新版から **Doxygon-windows-x64-vX.Y.Z.zip** をダウンロードし、適当なフォルダーに展開します。
 
 ### 実行
 コマンドプロンプトから、以下のコマンドを実行します。
@@ -146,6 +149,36 @@ GitHub の Release ページの最新版から **Doxygon-windows-x64-vxxx.zip** 
 ```bash
 > doxygon
 ```
+
+---
+
+## 生成される成果物
+
+Doxygon は、コメントから次の成果物を生成します。
+
+- **プログラム設計書**：AsciiDoc 形式
+- **単体試験仕様書**：JSON／CSV 形式
+
+単体試験仕様書は、`@ut` コマンドに記述した試験項目に加え、`@param` または `@return` に紐付けられた `@value` コマンドからテストケースを自動生成できます。
+
+``` vba
+'/**!
+' @fn Withdraw 出金処理
+' @param [in] amount 出金額
+' @value > 0 : 出金あり
+' @return result 処理結果
+' @value = 0 : 正常終了
+'*/
+
+'/**!
+' @ut
+' . 出金処理
+' + 残高から出金額が減算されることを確認する。
+' - 残高を超える場合、エラーとなることを確認する。
+'*/
+```
+
+コメントの記述方法、設定項目および出力内容の詳細は、[Doxygon Reference Manual](docs/Doxygon_Reference_Manual.pdf) を参照してください。
 
 ---
 
