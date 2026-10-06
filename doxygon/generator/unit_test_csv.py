@@ -14,9 +14,9 @@ from pathlib import Path
 from doxygon.model import (
     UtFileSpec,
     UtFunctionSpec,
-    UtAsciiDoc,
+    UtPlainText,
     UtHeading,
-    UtTestItem,
+    UtTestCase,
     UtValueBlock,
 )
 
@@ -120,15 +120,8 @@ def _generated_test_text(content: UtValueBlock) -> str:
     condition_text = _condition_text(content)
 
     if content.owner_command == "return":
-        text = f"{condition_text} が返されることを確認する。"
-
-        if condition.kind == "range":
-            text += (
-                f"あわせて、{_quoted_value(condition.lower)} より小さい値および "
-                f"{_quoted_value(condition.upper)} より大きい値が返される場合も確認する。"
-            )
-
-        return text
+        separator = " " if condition.kind == "exact" else ""
+        return f"{condition_text}{separator}が返されることを確認する。"
 
     subject = _value_subject(content)
     parameter_condition_text = _parameter_condition_text(content)
@@ -151,11 +144,8 @@ def _generated_test_text(content: UtValueBlock) -> str:
         f"「{subject}」が {parameter_condition_text}{separator}のときの処理を確認する。"
     )
 
-    if condition.kind == "range":
-        text += (
-            f"あわせて、{_quoted_value(condition.lower)} より小さい場合および "
-            f"{_quoted_value(condition.upper)} より大きい場合の処理も確認する。"
-        )
+    if content.direction in {"[in,out]", "[out,in]"}:
+        text += f"あわせて、「{subject}」の更新結果を確認する。"
 
     return text
 
@@ -172,7 +162,7 @@ def _max_level(file_specs: list[UtFileSpec]) -> int:
             )
 
             for item in contents:
-                if isinstance(item, (UtHeading, UtTestItem, UtAsciiDoc)):
+                if isinstance(item, (UtHeading, UtTestCase, UtPlainText)):
                     max_level = max(max_level, item.level)
                 elif isinstance(item, UtValueBlock):
                     max_level = max(max_level, 2)
@@ -197,7 +187,7 @@ def _make_rows(
     file_title: str,
     function_name: str,
     function_title: str,
-    contents: list[UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock],
+    contents: list[UtHeading | UtTestCase | UtPlainText | UtValueBlock],
     max_level: int,
 ) -> list[list[str | int]]:
     rows: list[list[str | int]] = []
@@ -211,6 +201,24 @@ def _make_rows(
                 if level > content.level:
                     del headings[level]
 
+            level_columns = [
+                headings.get(level, "") if level <= content.level else ""
+                for level in range(1, max_level + 1)
+            ]
+            rows.append(
+                [
+                    file_name,
+                    file_title,
+                    function_name,
+                    function_title,
+                    *level_columns,
+                    "heading",
+                    "",
+                    "",
+                    "",
+                    content.line if content.line is not None else "",
+                ]
+            )
             continue
 
         if isinstance(content, UtValueBlock):
@@ -232,7 +240,8 @@ def _make_rows(
                     function_name,
                     function_title,
                     *level_columns,
-                    "test",
+                    "testcase",
+                    f"@{content.owner_command}",
                     "normal",
                     _generated_test_text(content),
                     content.line if content.line is not None else "",
@@ -245,12 +254,12 @@ def _make_rows(
                     .replace("\r", "\n")
                     .rstrip("\n")
                     .split("\n")
-                    if item.kind == "asciidoc"
+                    if item.kind == "plaintext"
                     else [item.text]
                 )
 
                 for offset, item_line in enumerate(item_lines):
-                    if item.kind == "asciidoc" and not item_line.strip():
+                    if item.kind == "plaintext" and not item_line.strip():
                         continue
 
                     source_line = (
@@ -266,6 +275,7 @@ def _make_rows(
                             function_title,
                             *level_columns,
                             item.kind,
+                            "",
                             item.classification or "",
                             item_line,
                             source_line,
@@ -274,7 +284,7 @@ def _make_rows(
 
             continue
 
-        if isinstance(content, UtAsciiDoc):
+        if isinstance(content, UtPlainText):
             level_columns = [
                 headings.get(level, "") if level <= content.level else ""
                 for level in range(1, max_level + 1)
@@ -297,7 +307,8 @@ def _make_rows(
                         function_name,
                         function_title,
                         *level_columns,
-                        "asciidoc",
+                        "plaintext",
+                        "",
                         "",
                         content_line,
                         (
@@ -310,7 +321,7 @@ def _make_rows(
 
             continue
 
-        if not isinstance(content, UtTestItem):
+        if not isinstance(content, UtTestCase):
             continue
 
         level_columns = [
@@ -325,7 +336,8 @@ def _make_rows(
                 function_name,
                 function_title,
                 *level_columns,
-                "test",
+                "testcase",
+                "",
                 content.classification,
                 content.text,
                 content.line if content.line is not None else "",
@@ -356,6 +368,7 @@ def write_unit_test_csv(
         "Function Title",
         *(f"Level {level}" for level in range(1, max_level + 1)),
         "Content Type",
+        "Origin Command",
         "Classification",
         "Content",
         "Source Line",
@@ -367,7 +380,7 @@ def write_unit_test_csv(
         file_contents = [
             content
             for content in file_spec.contents
-            if isinstance(content, (UtHeading, UtTestItem, UtAsciiDoc, UtValueBlock))
+            if isinstance(content, (UtHeading, UtTestCase, UtPlainText, UtValueBlock))
         ]
         rows.extend(
             _make_rows(

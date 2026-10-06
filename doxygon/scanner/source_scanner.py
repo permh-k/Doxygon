@@ -901,6 +901,35 @@ def generate_clean_source_with_mapping(
         #
         # 通常の inline comment は後段で行末コメントとして除去するが、
         # Comment Only 運用ではこの行自体を clean source に残さない。
+        inline_only_pair = next(
+            (
+                (start, end)
+                for start, end in inline_pairs
+                if start and stripped.startswith(start)
+            ),
+            None,
+        )
+
+        if inline_only_pair is not None:
+            start_token, end_token = inline_only_pair
+
+            # An inline Doxygon comment must end on the same physical line.
+            # If its terminator is missing, keep the line in the clean source
+            # instead of silently deleting only the opening marker.  This
+            # makes malformed multiline use of an inline marker visible in
+            # the generated plain source.
+            if end_token and _find_clean_token(
+                stripped,
+                end_token,
+                len(start_token),
+            ) == -1:
+                append_clean(line, i + 1)
+                i += 1
+                continue
+
+            i += 1
+            continue
+
         if any(stripped.startswith(start) for start in effective_inline_starts):
             i += 1
             continue

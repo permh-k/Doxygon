@@ -13,9 +13,9 @@ from doxygon.model import (
     Node,
     UtFileSpec,
     UtFunctionSpec,
-    UtAsciiDoc,
+    UtPlainText,
     UtHeading,
-    UtTestItem,
+    UtTestCase,
     UtValueBlock,
 )
 
@@ -184,9 +184,9 @@ def build_unit_test_file_spec(
                 )
                 continue
 
-            if entry.kind == "test":
+            if entry.kind == "testcase":
                 target_contents.append(
-                    UtTestItem(
+                    UtTestCase(
                         level=current_heading_level,
                         classification=entry.test_type or "normal",
                         text=entry.text,
@@ -195,9 +195,9 @@ def build_unit_test_file_spec(
                 )
                 continue
 
-            if entry.kind == "asciidoc":
+            if entry.kind == "plaintext":
                 target_contents.append(
-                    UtAsciiDoc(
+                    UtPlainText(
                         level=current_heading_level,
                         text=entry.text,
                         line=entry.line,

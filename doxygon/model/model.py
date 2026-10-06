@@ -142,11 +142,11 @@ class UtHeading:
 
 
 """!
-@class UtTestItem 単体試験項目格納クラス
+@class UtTestCase 単体試験項目格納クラス
 @brief 試験項目の見出しレベル、正常系または異常系の分類および内容を保持する。
 """
 @dataclass(slots=True, frozen=True)
-class UtTestItem:
+class UtTestCase:
     level: int
     classification: str
     text: str
@@ -154,11 +154,11 @@ class UtTestItem:
 
 
 """!
-@class UtAsciiDoc 単体試験仕様AsciiDoc要素格納クラス
-@brief 試験項目に付随するAsciiDoc記述と見出しレベルを保持する。
+@class UtPlainText 単体試験仕様通常記述格納クラス
+@brief 試験項目に付随する通常記述と見出しレベルを保持する。
 """
 @dataclass(slots=True, frozen=True)
-class UtAsciiDoc:
+class UtPlainText:
     level: int
     text: str
     line: int | None = None
@@ -178,7 +178,7 @@ class UtValueBlock:
     line: int | None = None
 
 
-UtContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock
+UtContent = UtHeading | UtTestCase | UtPlainText | UtValueBlock
 
 
 """!
@@ -192,7 +192,7 @@ class UtFunctionSpec:
     contents: list[UtContent] = field(default_factory=list)
 
 
-UtFileContent = UtHeading | UtTestItem | UtAsciiDoc | UtValueBlock | UtFunctionSpec
+UtFileContent = UtHeading | UtTestCase | UtPlainText | UtValueBlock | UtFunctionSpec
 
 
 """!

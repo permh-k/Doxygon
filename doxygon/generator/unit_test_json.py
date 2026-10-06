@@ -13,9 +13,9 @@ from pathlib import Path
 from doxygon.model import (
     UtFileSpec,
     UtFunctionSpec,
-    UtAsciiDoc,
+    UtPlainText,
     UtHeading,
-    UtTestItem,
+    UtTestCase,
     UtValueBlock,
 )
 
@@ -38,27 +38,31 @@ def _serialize_content(content) -> dict:
         return {
             "level": content.level,
             "heading": content.text,
+            "origin_command": "",
             "line": content.line,
         }
 
-    if isinstance(content, UtTestItem):
+    if isinstance(content, UtTestCase):
         return {
             "level": content.level,
-            "test": content.text,
+            "testcase": content.text,
             "classification": content.classification,
+            "origin_command": "",
             "line": content.line,
         }
 
-    if isinstance(content, UtAsciiDoc):
+    if isinstance(content, UtPlainText):
         return {
             "level": content.level,
-            "asciidoc": content.text,
+            "plaintext": content.text,
+            "origin_command": "",
             "line": content.line,
         }
 
     if isinstance(content, UtValueBlock):
         condition = content.condition
         return {
+            "origin_command": f"@{content.owner_command}",
             "value_block": {
                 "owner": {
                     "command": content.owner_command,
@@ -80,6 +84,7 @@ def _serialize_content(content) -> dict:
                         "kind": item.kind,
                         "text": item.text,
                         "classification": item.classification,
+                        "origin_command": "",
                         "line": item.line,
                     }
                     for item in condition.contents

@@ -556,8 +556,6 @@ def preprocess(
     i = 0
     block_id = 0
 
-    current_container: CommandBlock | None = None
-    container_set = {c.lower().lstrip("@") for c in container_commands}
     known_command_set = {c.lower().lstrip("@") for c in (known_commands or [])}
 
     while i < n:
@@ -587,7 +585,6 @@ def preprocess(
                 continue
 
             content = line[pos + len(start):]
-
             content, _found_inline_end = _split_at_inline_end_token(content, end)
 
             inline = content.strip()
@@ -690,16 +687,6 @@ def preprocess(
 
             result.extend(command_blocks)
 
-            # ------------------------------------------
-            # container 再設定
-            # ------------------------------------------
-            for block in command_blocks:
-                command_name = _extract_command_name(block.command_line)
-
-                if command_name in container_set:
-                    current_container = block
-                    break
-
             if stopped_at_next_block:
                 i = j
             else:
@@ -709,4 +696,3 @@ def preprocess(
         i += 1
 
     return result
-

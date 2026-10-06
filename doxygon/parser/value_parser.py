@@ -106,7 +106,7 @@ def _split_description(payload: str) -> tuple[str, str, bool]:
 
 """!
 @fn _parse_value_contents "@value"ブロック本文解析処理
-@brief "@value"ブロック本文を試験項目とAsciiDoc記述へ分類する。
+@brief "@value"ブロック本文を試験項目と通常記述へ分類する。
 @param [in] body_lines "@value"ブロック本文
 @param [in] start_line "@value"コマンドのソース行番号
 @return result "@value"ブロック内容と診断情報
@@ -116,12 +116,12 @@ def _parse_value_contents(
     body_lines: list[str],
     start_line: int | None,
 ) -> tuple[tuple[ValueContent, ...], list[Diagnostic]]:
-    """Parse test markers and preserve other lines as AsciiDoc blocks."""
+    """Parse test markers and preserve other lines as plain text blocks."""
 
     contents: list[ValueContent] = []
     diagnostics: list[Diagnostic] = []
-    asciidoc_lines: list[str] = []
-    asciidoc_start_line: int | None = None
+    plain_lines: list[str] = []
+    plain_start_line: int | None = None
 
     first_content = 0
     last_content = len(body_lines)
@@ -138,21 +138,21 @@ def _parse_value_contents(
     ):
         last_content -= 1
 
-    def flush_asciidoc() -> None:
-        nonlocal asciidoc_lines, asciidoc_start_line
+    def flush_plain() -> None:
+        nonlocal plain_lines, plain_start_line
 
-        if not asciidoc_lines:
+        if not plain_lines:
             return
 
         contents.append(
             ValueContent(
-                kind="asciidoc",
-                text="\n".join(asciidoc_lines),
-                line=asciidoc_start_line,
+                kind="plaintext",
+                text="\n".join(plain_lines),
+                line=plain_start_line,
             )
         )
-        asciidoc_lines = []
-        asciidoc_start_line = None
+        plain_lines = []
+        plain_start_line = None
 
     for index in range(first_content, last_content):
         raw_line = body_lines[index]
@@ -167,12 +167,12 @@ def _parse_value_contents(
             classification = "abnormal"
 
         if classification is None:
-            if not asciidoc_lines:
-                asciidoc_start_line = source_line
-            asciidoc_lines.append(raw_line)
+            if not plain_lines:
+                plain_start_line = source_line
+            plain_lines.append(raw_line)
             continue
 
-        flush_asciidoc()
+        flush_plain()
         test_text = marker_line[1:].strip(" \t")
 
         if not test_text.strip(" \t"):
@@ -187,14 +187,14 @@ def _parse_value_contents(
 
         contents.append(
             ValueContent(
-                kind="test",
+                kind="testcase",
                 classification=classification,
                 text=test_text,
                 line=source_line,
             )
         )
 
-    flush_asciidoc()
+    flush_plain()
     return tuple(contents), diagnostics
 
 

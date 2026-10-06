@@ -41,31 +41,31 @@ def parse_ut_entries(
     while source_lines and not (source_lines[-1][0] or "").strip():
         source_lines.pop()
 
-    asciidoc_lines: list[str] = []
-    asciidoc_start_line: int | None = None
+    plain_lines: list[str] = []
+    plain_start_line: int | None = None
 
-    def flush_asciidoc() -> None:
-        nonlocal asciidoc_lines, asciidoc_start_line
+    def flush_plain() -> None:
+        nonlocal plain_lines, plain_start_line
 
-        if not asciidoc_lines:
+        if not plain_lines:
             return
 
         entries.append(
             UtEntry(
-                kind="asciidoc",
-                text="\n".join(asciidoc_lines),
-                line=asciidoc_start_line,
+                kind="plaintext",
+                text="\n".join(plain_lines),
+                line=plain_start_line,
             )
         )
-        asciidoc_lines = []
-        asciidoc_start_line = None
+        plain_lines = []
+        plain_start_line = None
 
     for raw_line, line_no in source_lines:
         preserved_line = raw_line or ""
         line = preserved_line.lstrip(" \t")
 
         if line.startswith("."):
-            flush_asciidoc()
+            flush_plain()
             level = len(line) - len(line.lstrip("."))
             heading_text = line[level:].strip(" \t")
 
@@ -90,7 +90,7 @@ def parse_ut_entries(
             continue
 
         if line.startswith(("+", "-")):
-            flush_asciidoc()
+            flush_plain()
             test_text = line[1:].strip(" \t")
 
             if not test_text:
@@ -105,7 +105,7 @@ def parse_ut_entries(
 
             entries.append(
                 UtEntry(
-                    kind="test",
+                    kind="testcase",
                     test_type="normal" if line[0] == "+" else "abnormal",
                     text=test_text,
                     line=line_no,
@@ -113,9 +113,9 @@ def parse_ut_entries(
             )
             continue
 
-        if not asciidoc_lines:
-            asciidoc_start_line = line_no
-        asciidoc_lines.append(preserved_line)
+        if not plain_lines:
+            plain_start_line = line_no
+        plain_lines.append(preserved_line)
 
-    flush_asciidoc()
+    flush_plain()
     return entries, diagnostics

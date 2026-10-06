@@ -29,7 +29,6 @@ CONTAINER_TITLE_MAP = {
     "union": "共用体",
     "type": "型定義",
 }
-CONTAINER_COMMANDS = set(CONTAINER_TITLE_MAP.keys())
 
 def _extract_location(n: Node, *, source_filename) -> str:
 
@@ -224,30 +223,15 @@ def _split_global_and_sections(
 
     current_parent: Node | None = None
 
-    # A physical Doxygon comment may contain several @commands.  Decide the
-    # owner from the whole comment instead of changing it as soon as @fn or a
-    # container command is encountered.  Otherwise commands written before
-    # and after @class acquire different owners merely because of their order.
-    groups: list[list[Node]] = []
-
-    for n in nodes:
-        source_block_id = n.source_block_id
-
-        if (
-            source_block_id is not None
-            and groups
-            and groups[-1][0].source_block_id == source_block_id
-        ):
-            groups[-1].append(n)
-        else:
-            groups.append([n])
+    groups = _group_nodes_by_source_comment(nodes)
 
     for group in groups:
         file_nodes = [n for n in group if n.command == "file"]
         group_fn_nodes = [n for n in group if n.command == "fn"]
         group_container_nodes = [
-            n for n in group
-            if n.is_container or n.command in CONTAINER_COMMANDS
+            n
+            for n in group
+            if n.is_container or n.command in CONTAINER_TITLE_MAP
         ]
         structural_ids = {
             id(n)
@@ -286,7 +270,18 @@ def _split_global_and_sections(
         # owners keeps its content visible at file level instead of silently
         # assigning it according to command order.
         if not owners and current_parent is not None:
-            current_parent.children.extend(content_nodes)
+            # @define is a file-wide macro declaration.  A standalone
+            # @define comment following a class/type comment must not be
+            # absorbed into that preceding container merely because no new
+            # structural command appeared in between.
+            continuation_nodes = [
+                n for n in content_nodes if n.command != "define"
+            ]
+            file_wide_nodes = [
+                n for n in content_nodes if n.command == "define"
+            ]
+            current_parent.children.extend(continuation_nodes)
+            global_nodes.extend(file_wide_nodes)
         else:
             global_nodes.extend(content_nodes)
 
@@ -294,6 +289,29 @@ def _split_global_and_sections(
             current_parent = None
 
     return global_nodes, fn_nodes, container_nodes
+
+
+"""!
+@fn _group_nodes_by_source_comment 物理コメント単位グループ化処理
+@brief コマンドノードを同じ物理Doxygonコメント単位にグループ化する。
+@details コマンドノード自体は独立したまま維持し、描画先の決定にだけ物理コメントIDを使用する。
+@param [in] nodes 対象となるコマンドノード
+@return groups 物理コメント単位にまとめたコマンドノード一覧
+"""
+def _group_nodes_by_source_comment(nodes: list[Node]) -> list[list[Node]]:
+    groups: list[list[Node]] = []
+
+    for node in nodes:
+        if (
+            node.source_block_id is not None
+            and groups
+            and groups[-1][0].source_block_id == node.source_block_id
+        ):
+            groups[-1].append(node)
+        else:
+            groups.append([node])
+
+    return groups
 
 
 """!
@@ -1218,7 +1236,10 @@ def _render_value_bullet(lines: list[str], node: Node) -> None:
     if entry.kind == "range":
         condition = f"= {entry.lower} - {entry.upper}"
     else:
-        condition = f"{entry.operator} {entry.value}"
+        # Asciidoctor replaces ``<=`` with a left double arrow.  Escape only
+        # the AsciiDoc representation; JSON/CSV retain the original operator.
+        operator = r"\<=" if entry.operator == "<=" else entry.operator
+        condition = f"{operator} {entry.value}"
 
     lines.append(f"* {index}{condition}{description}")
 
@@ -1470,37 +1491,6 @@ def _render_inline_members(lines: list[str], nodes: list[Node]) -> None:
         _emit_body(lines, body)
 
 
-def _container_has_detail(n: Node) -> bool:
-    """Return True when a container needs its own detail section.
-
-    The container command's TAG/SENTENCE itself is already shown in the
-    container summary list.  Therefore a detail section is emitted only when
-    the container has additional content such as body text, child commands,
-    inline members, or an actual DelimSegment.
-
-    Note: current V4 Node always has ``segments``.  A command without body may
-    still carry an empty TextSegment, so checking ``if n.segments`` makes every
-    container look detailed.
-    """
-    if n.body and any((line or "").strip() for line in n.body):
-        return True
-
-    if n.children:
-        return True
-
-    for seg in (n.segments or []):
-        if isinstance(seg, DelimSegment):
-            return True
-        if isinstance(seg, TextSegment) and any((line or "").strip() for line in seg.lines):
-            return True
-
-    # Older/future models may expose delim_blocks directly.
-    if getattr(n, "delim_blocks", None):
-        return True
-
-    return False
-
-
 """!
 @fn _render_container_section コンテナブロック描画処理
 @brief コンテナブロックを描画する。
@@ -1517,7 +1507,10 @@ def _render_container_section(
     function_blocks: list[FunctionBlock] | None = None,
     fn_nodes_by_name: dict[str, Node] | None = None,
 ) -> None:
-    targets = [n for n in nodes if n.command == command and _container_has_detail(n)]
+    # A container command is sufficient to create a detail entry.  Even when
+    # it has no body or child command, the command's name and description are
+    # meaningful documentation and must not disappear from the detail view.
+    targets = [n for n in nodes if n.command == command]
 
     if not targets:
         return
@@ -1978,7 +1971,7 @@ def generate_adoc(
     # @file に続く @command はここに表示
     global_nodes_without_define = [
         n for n in global_nodes
-        if n.command not in {"file"}
+        if n.command not in {"file", "define"}
     ]
 
     _render_grouped(lines, global_nodes_without_define, source_filename=source_filename)
@@ -1988,7 +1981,12 @@ def generate_adoc(
         _render_container_summary(lines, container_nodes, command)
 
     # マクロ索引
-    _render_define_summary(lines, global_nodes)
+    #
+    # @define may share a physical comment with @class/@fn.  Section
+    # aggregation must not remove it from the file-wide macro index, so build
+    # the index from the original command sequence rather than only from
+    # file-level nodes.
+    _render_define_summary(lines, nodes)
 
     # 関数一覧
     _render_function_summary(lines, function_blocks, fn_nodes_by_name)
